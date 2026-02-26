@@ -126,11 +126,11 @@ def riesgos_academicos(nombre_archivo):
         for id_estudiante, info in riesgos_ordenados:
             print(f"ID: {id_estudiante} | Carrera: {info['carrera']} | Promedio: {info['promedio']:.2f}")
 
-# Ejemplo de uso
+# Imprimir resultados
 riesgos_academicos('datos_rendimiento_universidad.csv')
 
-#tendencias_por_semestre('datos_rendimiento_universidad.csv')
+tendencias_por_semestre('datos_rendimiento_universidad.csv')
 
-#carreras_mayor_promedio('datos_rendimiento_universidad.csv')
+carreras_mayor_promedio('datos_rendimiento_universidad.csv')
 
-# materias_mayor_reprobacion('datos_rendimiento_universidad.csv')
+materias_mayor_reprobacion('datos_rendimiento_universidad.csv')
