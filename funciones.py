@@ -128,9 +128,9 @@ def riesgos_academicos(nombre_archivo):
 
 # Imprimir resultados
 riesgos_academicos('datos_rendimiento_universidad.csv')
-
+print("\n")
 tendencias_por_semestre('datos_rendimiento_universidad.csv')
-
+print("\n")
 carreras_mayor_promedio('datos_rendimiento_universidad.csv')
-
+print("\n")
 materias_mayor_reprobacion('datos_rendimiento_universidad.csv')
