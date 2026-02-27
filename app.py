@@ -1,31 +1,31 @@
-from flask import Flask, render_template, request
-from funciones import materias_mayor_reprobacion, carreras_mayor_promedio, tendencias_por_semestre, riesgos_academicos
+from flask import Flask, render_template
+from funciones import (
+    materias_mayor_reprobacion,
+    carreras_mayor_promedio,
+    tendencias_por_semestre,
+    riesgos_academicos
+)
 
 app = Flask(__name__)
 
 @app.route('/')
-def index():
-    return render_template('/home/juander/HabilidadesDirectivas/AnalisisDeDatos/code.html')
+def dashboard():
+    archivo = 'datos_rendimiento_universidad.csv'
 
-@app.route('/reprobacion')
-def reprobacion():
-    datos = materias_mayor_reprobacion('datos_rendimiento_universidad.csv')
-    return {'materias': datos}
+    # Obtener datos desde tus funciones
+    materias = materias_mayor_reprobacion(archivo)
+    carreras = carreras_mayor_promedio(archivo)
+    tendencias = tendencias_por_semestre(archivo)
+    riesgos = riesgos_academicos(archivo)
 
-@app.route('/promedios')
-def promedios():
-    datos = carreras_mayor_promedio('datos_rendimiento_universidad.csv')
-    return {'carreras': datos}
-
-@app.route('/tendencias')
-def tendencias():
-    datos = tendencias_por_semestre('datos_rendimiento_universidad.csv')
-    return {'tendencias': datos}
-
-@app.route('/riesgos')
-def riesgos():
-    datos = riesgos_academicos('datos_rendimiento_universidad.csv')
-    return {'riesgos': datos}
+    # Enviar datos al HTML
+    return render_template(
+        'code.html',
+        materias=materias,
+        carreras=carreras,
+        tendencias=tendencias,
+        riesgos=riesgos
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)

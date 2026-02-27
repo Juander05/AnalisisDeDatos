@@ -14,11 +14,14 @@ def materias_mayor_reprobacion(nombre_archivo):
                 reprobaciones[materia] = reprobaciones.get(materia, 0) + 1
 
     # Ordenar de mayor a menor reprobaciones
-    materias_ordenadas = sorted(reprobaciones.items(), key=lambda x: x[1], reverse=True)
+    # materias_ordenadas = sorted(reprobaciones.items(), key=lambda x: x[1], reverse=True)
+    return sorted(reprobaciones.items(), key=lambda x: x[1], reverse=True)
 
+    '''
     print("Materias con mayor índice de reprobación:")
     for materia, cantidad in materias_ordenadas:
         print(f"{materia}: {cantidad} reprobados")
+    '''
 
 def carreras_mayor_promedio(nombre_archivo):
     promedios = {}
@@ -43,11 +46,14 @@ def carreras_mayor_promedio(nombre_archivo):
         resultados[carrera] = promedio
 
     # Ordenar de mayor a menor promedio
-    carreras_ordenadas = sorted(resultados.items(), key=lambda x: x[1], reverse=True)
+    # carreras_ordenadas = sorted(resultados.items(), key=lambda x: x[1], reverse=True)
+    return sorted(resultados.items(), key=lambda x: x[1], reverse=True)
 
+    '''
     print("Carreras con mayor promedio:")
     for carrera, promedio in carreras_ordenadas:
         print(f"{carrera}: {promedio:.2f}")
+    '''
 
 def tendencias_por_semestre(nombre_archivo):
     tendencias = {}
@@ -71,8 +77,10 @@ def tendencias_por_semestre(nombre_archivo):
         promedios_semestre[semestre] = promedio
 
     # Ordenar por semestre (menor a mayor)
-    semestres_ordenados = sorted(promedios_semestre.items())
+    # semestres_ordenados = sorted(promedios_semestre.items())
+    return sorted(promedios_semestre.items())
 
+    '''
     print("Tendencias por semestre:")
     for semestre, promedio in semestres_ordenados:
         print(f"Semestre {semestre}: promedio {promedio:.2f}")
@@ -87,6 +95,7 @@ def tendencias_por_semestre(nombre_archivo):
             print("Tendencia general: en descenso")
         else:
             print("Tendencia general: estable")
+    '''
 
 def riesgos_academicos(nombre_archivo):
     estudiantes = {}
@@ -117,16 +126,20 @@ def riesgos_academicos(nombre_archivo):
     riesgos = {id_: info for id_, info in promedios.items() if info['promedio'] < 6}
 
     # Ordenar de menor a mayor promedio
-    riesgos_ordenados = sorted(riesgos.items(), key=lambda x: x[1]['promedio'])
+    # riesgos_ordenados = sorted(riesgos.items(), key=lambda x: x[1]['promedio'])
+    return sorted(riesgos.items(), key=lambda x: x[1]['promedio'])
 
+    '''
     print("Posibles riesgos académicos (promedio < 6):")
     if not riesgos_ordenados:
         print("No hay estudiantes en riesgo.")
     else:
         for id_estudiante, info in riesgos_ordenados:
             print(f"ID: {id_estudiante} | Carrera: {info['carrera']} | Promedio: {info['promedio']:.2f}")
+    '''
 
 # Imprimir resultados
+'''
 riesgos_academicos('datos_rendimiento_universidad.csv')
 print("\n")
 tendencias_por_semestre('datos_rendimiento_universidad.csv')
@@ -134,3 +147,4 @@ print("\n")
 carreras_mayor_promedio('datos_rendimiento_universidad.csv')
 print("\n")
 materias_mayor_reprobacion('datos_rendimiento_universidad.csv')
+'''
