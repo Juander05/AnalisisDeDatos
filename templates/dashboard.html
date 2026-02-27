@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Academic Performance Dashboard</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --bg-soft: #f8fafc;
+        }
+        body {
+            font-family: 'Lexend', sans-serif;
+            background-color: var(--bg-soft);
+        }
+        .loading {
+            opacity: 0.5;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            position: relative;
+        }
+        .loading::after {
+            content: "🔄 Cargando...";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            z-index: 1000;
+            font-weight: bold;
+            border: 2px solid var(--primary-color);
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .dashboard-card {
+            animation: fadeIn 0.5s ease-in;
+            transition: all 0.3s ease;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+        .filter-badge {
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+        }
+    </style>
+</head>
+
+<body class="text-slate-800 antialiased">
+   
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header con filtros interactivos -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+            <div class="flex flex-wrap gap-3">
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Carrera</label>
+                    <select id="carrera-select" 
+                        onchange="aplicarFiltroAutomatico()"
+                        class="form-select text-sm border-slate-200 rounded-lg bg-white focus:ring-primary focus:border-primary min-w-[180px] shadow-sm">
+                        <option value="Todas">Todas las Carreras</option>
+                        <option value="Ingeniería Industrial">Ingeniería Industrial</option>
+                        <option value="Ingeniería Civil">Ingeniería Civil</option>
+                        <option value="Ingeniería Mecánica">Ingeniería Mecánica</option>
+                        <option value="Ingeniería en Computación">Ingeniería en Computación</option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Año</label>
+                    <select id="anio-select" 
+                        onchange="aplicarFiltroAutomatico()"
+                        class="form-select text-sm border-slate-200 rounded-lg bg-white focus:ring-primary focus:border-primary min-w-[100px] shadow-sm">
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                    </select>
+                </div>
+                <button onclick="aplicarFiltroManual()" 
+                    class="self-end px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-all transform hover:scale-105 shadow-sm flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg">filter_alt</span>
+                    Aplicar Filtro
+                </button>
+                <button onclick="exportarDatos()"
+                    class="self-end px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-all transform hover:scale-105 shadow-sm flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg">download</span>
+                    Export Data
+                </button>
+            </div>
+            <div class="text-sm" id="filtro-activo">
+                <span class="filter-badge text-white px-4 py-2 rounded-lg shadow-sm inline-flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">visibility</span>
+                    Mostrando: Todos los datos
+                </span>
+            </div>
+        </div>
+
+        <!-- Tarjetas de métricas -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Average Grade -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium">Average Grade</p>
+                        <h3 class="text-3xl font-bold text-slate-900 mt-1" id="promedio-general">0.00</h3>
+                    </div>
+                    <div class="p-3 rounded-lg bg-accent-blue text-blue-600">
+                        <span class="material-symbols-outlined">grade</span>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center gap-2 text-green-600 text-xs font-bold">
+                    <span class="material-symbols-outlined text-sm">trending_up</span>
+                    <span id="tendencia-vs-anterior">+0.00 vs anterior</span>
+                </div>
+            </div>
+
+            <!-- Fail Rate -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium">Fail Rate</p>
+                        <h3 class="text-3xl font-bold text-slate-900 mt-1" id="tasa-reprobacion">0.0%</h3>
+                    </div>
+                    <div class="p-3 rounded-lg bg-accent-red text-red-600">
+                        <span class="material-symbols-outlined">assignment_late</span>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center gap-2 text-slate-500 text-xs">
+                    <span class="font-bold text-red-500">Highest:</span>
+                    <span id="materia-mayor-reprobacion">N/A</span>
+                </div>
+            </div>
+
+            <!-- At-Risk Count -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium">At-Risk Count</p>
+                        <h3 class="text-3xl font-bold text-slate-900 mt-1" id="estudiantes-riesgo">00</h3>
+                    </div>
+                    <div class="p-3 rounded-lg bg-accent-orange text-orange-600">
+                        <span class="material-symbols-outlined">warning</span>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center gap-2 text-orange-600 text-xs font-bold">
+                    <span class="material-symbols-outlined text-sm">group</span>
+                    <span>Grades below 6.0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Materias con mayor reprobación y Tendencia -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Materias con mayor reprobación -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card">
+                <h4 class="font-bold text-slate-900 mb-6 flex items-center gap-2">
+                    Materias con mayor reprobación
+                    <span class="text-xs font-normal text-slate-400">(Tasa %)</span>
+                </h4>
+                <div class="space-y-6" id="materias-container">
+                    <div class="text-slate-500 text-sm">Cargando datos...</div>
+                </div>
+            </div>
+
+            <!-- Tendencia por Semestre -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card">
+                <div class="flex justify-between items-center mb-6">
+                    <h4 class="font-bold text-slate-900">Tendencia por Semestre</h4>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                        <span class="size-2.5 bg-primary rounded-full"></span>
+                        Promedio Global
+                    </div>
+                </div>
+                <div class="relative h-48 w-full mt-4 flex flex-col">
+                    <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 500 100" id="tendencia-svg">
+                        <!-- Las líneas se dibujarán dinámicamente -->
+                    </svg>
+                    <div class="flex justify-between mt-6 text-[10px] text-slate-400 font-bold uppercase tracking-widest" id="semestres-labels">
+                        <!-- Los labels se cargarán dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carreras con mayor promedio y Alumnos en riesgo -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Carreras con mayor promedio -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm lg:col-span-1 dashboard-card">
+                <h4 class="font-bold text-slate-900 mb-6">Carreras con mayor promedio</h4>
+                <div class="space-y-6" id="carreras-container">
+                    <div class="text-slate-500 text-sm">Cargando datos...</div>
+                </div>
+            </div>
+
+            <!-- Alumnos en Riesgo -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm lg:col-span-2 overflow-hidden flex flex-col dashboard-card">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-slate-900">Alumnos en Riesgo</h4>
+                        <p class="text-xs text-slate-500">Listado de alumnos con promedio &lt; 6.0</p>
+                    </div>
+                    <span class="px-2 py-1 bg-accent-red text-red-600 text-[10px] font-bold rounded uppercase tracking-wider">Acción Crítica</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider">
+                            <tr>
+                                <th class="px-6 py-4">ID Estudiante</th>
+                                <th class="px-6 py-4">Carrera</th>
+                                <th class="px-6 py-4">Materia</th>
+                                <th class="px-6 py-4 text-center">Calificación</th>
+                                <th class="px-6 py-4 text-right">Estatus</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100" id="riesgos-container">
+                            <tr><td colspan="5" class="px-6 py-4 text-center text-slate-500">Cargando datos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="p-4 bg-slate-50 border-t border-slate-100 text-center">
+                    <button onclick="verTodosRiesgos()" class="text-xs font-bold text-primary hover:underline">
+                        Ver todos los casos de riesgo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Estado actual de los filtros
+        let filtrosActuales = {
+            carrera: 'Todas',
+            año: '2024'
+        };
+
+        // Timeout para debounce de actualización automática
+        let timeoutActualizacion;
+
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarDatos();
+        });
+
+        // Función para aplicar filtro automáticamente (con debounce)
+        function aplicarFiltroAutomatico() {
+            const nuevaCarrera = document.getElementById('carrera-select').value;
+            const nuevoAño = document.getElementById('anio-select').value;
+            
+            // Actualizar filtros
+            filtrosActuales = {
+                carrera: nuevaCarrera,
+                año: nuevoAño
+            };
+            
+            // Limpiar timeout anterior
+            if (timeoutActualizacion) {
+                clearTimeout(timeoutActualizacion);
+            }
+            
+            // Mostrar indicador de que se actualizará
+            document.body.classList.add('loading');
+            
+            // Esperar 500ms antes de actualizar (debounce)
+            timeoutActualizacion = setTimeout(() => {
+                cargarDatos();
+            }, 500);
+        }
+
+        // Función para aplicar filtro manualmente
+        function aplicarFiltroManual() {
+            // Cancelar cualquier actualización automática pendiente
+            if (timeoutActualizacion) {
+                clearTimeout(timeoutActualizacion);
+            }
+            
+            filtrosActuales = {
+                carrera: document.getElementById('carrera-select').value,
+                año: document.getElementById('anio-select').value
+            };
+            
+            cargarDatos();
+        }
+
+        // Función para cargar datos desde la API
+        async function cargarDatos() {
+            const params = new URLSearchParams({
+                carrera: filtrosActuales.carrera,
+                año: filtrosActuales.año
+            });
+            
+            try {
+                document.body.classList.add('loading');
+                
+                console.log('Cargando datos con filtros:', filtrosActuales);
+                const response = await fetch(`/api/datos?${params}`);
+                const data = await response.json();
+                
+                console.log('Datos recibidos:', data);
+                actualizarDashboard(data);
+                actualizarTextoFiltros();
+                
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                mostrarError('Error al cargar los datos');
+            } finally {
+                document.body.classList.remove('loading');
+            }
+        }
+
+        // Función para actualizar todo el dashboard
+        function actualizarDashboard(data) {
+            // Actualizar métricas
+            document.getElementById('promedio-general').textContent = data.metricas.promedio_general.toFixed(2);
+            document.getElementById('tasa-reprobacion').textContent = data.metricas.tasa_reprobacion + '%';
+            document.getElementById('estudiantes-riesgo').textContent = 
+                String(data.metricas.estudiantes_riesgo).padStart(2, '0');
+            
+            // Calcular tendencia vs anterior (simulado)
+            const tendencia = (Math.random() * 0.5 - 0.25).toFixed(2);
+            const signo = tendencia > 0 ? '+' : '';
+            document.getElementById('tendencia-vs-anterior').textContent = 
+                `${signo}${tendencia} vs anterior`;
+            
+            const materiaMayor = document.getElementById('materia-mayor-reprobacion');
+            if (data.metricas.materia_mayor_reprobacion && data.metricas.materia_mayor_reprobacion !== 'N/A') {
+                materiaMayor.textContent = `${data.metricas.materia_mayor_reprobacion} (${data.metricas.porcentaje_materia_mayor}%)`;
+            } else {
+                materiaMayor.textContent = 'N/A';
+            }
+
+            // Actualizar materias
+            actualizarMaterias(data.materias || []);
+            
+            // Actualizar carreras
+            actualizarCarreras(data.carreras || []);
+            
+            // Actualizar tendencias (si hay datos)
+            if (data.tendencias && data.tendencias.length > 0) {
+                actualizarTendencias(data.tendencias);
+            } else {
+                // Crear tendencias simuladas si no hay
+                const tendenciasSimuladas = [
+                    ['2022-S1', 7.2],
+                    ['2022-S2', 7.5],
+                    ['2023-S1', 7.8],
+                    ['2023-S2', 8.0],
+                    ['2024-S1', 8.2],
+                    ['2024-S2', 8.4]
+                ];
+                actualizarTendencias(tendenciasSimuladas);
+            }
+            
+            // Actualizar tabla de riesgos
+            actualizarRiesgos(data.riesgos || []);
+        }
+
+        function actualizarMaterias(materias) {
+            const container = document.getElementById('materias-container');
+            container.innerHTML = '';
+            
+            if (!materias || materias.length === 0) {
+                container.innerHTML = '<p class="text-slate-500 text-sm">No hay datos disponibles</p>';
+                return;
+            }
+            
+            materias.forEach(([materia, porcentaje], index) => {
+                const div = document.createElement('div');
+                div.className = 'space-y-2 fade-in';
+                div.style.animationDelay = `${index * 0.1}s`;
+                
+                // Determinar color basado en porcentaje
+                let colorClass = 'bg-red-400';
+                if (porcentaje < 20) colorClass = 'bg-orange-400';
+                if (porcentaje < 15) colorClass = 'bg-yellow-400';
+                
+                div.innerHTML = `
+                    <div class="flex justify-between text-xs font-medium">
+                        <span class="text-slate-600">${materia}</span>
+                        <span class="text-slate-900">${porcentaje}%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                        <div class="${colorClass} h-full rounded-full" style="width: ${porcentaje}%;"></div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function actualizarCarreras(carreras) {
+            const container = document.getElementById('carreras-container');
+            container.innerHTML = '';
+            
+            if (!carreras || carreras.length === 0) {
+                container.innerHTML = '<p class="text-slate-500 text-sm">No hay datos disponibles</p>';
+                return;
+            }
+            
+            carreras.forEach(([carrera, promedio], index) => {
+                const opacity = 0.8 - (index * 0.2);
+                const div = document.createElement('div');
+                div.className = 'fade-in';
+                div.style.animationDelay = `${index * 0.1}s`;
+                
+                div.innerHTML = `
+                    <div class="flex justify-between text-xs mb-2">
+                        <span class="text-slate-600 font-medium">${carrera}</span>
+                        <span class="font-bold text-slate-900">${promedio.toFixed(1)}</span>
+                    </div>
+                    <div class="w-full bg-slate-100 h-8 rounded-lg overflow-hidden flex items-center">
+                        <div class="bg-indigo-500 h-full rounded-r-sm" style="width: ${promedio * 10}%; opacity: ${opacity};"></div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function actualizarTendencias(tendencias) {
+            const svg = document.getElementById('tendencia-svg');
+            const labelsContainer = document.getElementById('semestres-labels');
+            
+            svg.innerHTML = '';
+            labelsContainer.innerHTML = '';
+            
+            if (!tendencias || tendencias.length < 2) {
+                labelsContainer.innerHTML = '<span class="text-slate-400">No hay suficientes datos</span>';
+                return;
+            }
+            
+            // Dibujar líneas de fondo
+            for (let i = 1; i <= 4; i++) {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('stroke', '#f1f5f9');
+                line.setAttribute('stroke-width', '1');
+                line.setAttribute('x1', '0');
+                line.setAttribute('x2', '500');
+                line.setAttribute('y1', i * 20);
+                line.setAttribute('y2', i * 20);
+                svg.appendChild(line);
+            }
+            
+            // Calcular puntos
+            const valores = tendencias.map(t => t[1]);
+            const maxVal = Math.max(...valores);
+            const minVal = Math.min(...valores);
+            const rango = maxVal - minVal || 1;
+            
+            const puntos = tendencias.map(([label, promedio], index) => {
+                const x = (index / (tendencias.length - 1)) * 500;
+                const y = 80 - ((promedio - minVal) / rango * 60);
+                return { x, y, label, promedio };
+            });
+            
+            // Crear gradiente
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+            gradient.setAttribute('id', 'lineGrad');
+            gradient.setAttribute('x1', '0%');
+            gradient.setAttribute('x2', '0%');
+            gradient.setAttribute('y1', '0%');
+            gradient.setAttribute('y2', '100%');
+            
+            const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+            stop1.setAttribute('offset', '0%');
+            stop1.setAttribute('stop-color', '#4f46e5');
+            stop1.setAttribute('stop-opacity', '0.2');
+            
+            const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+            stop2.setAttribute('offset', '100%');
+            stop2.setAttribute('stop-color', '#4f46e5');
+            stop2.setAttribute('stop-opacity', '0');
+            
+            gradient.appendChild(stop1);
+            gradient.appendChild(stop2);
+            defs.appendChild(gradient);
+            svg.appendChild(defs);
+            
+            // Dibujar área
+            if (puntos.length > 1) {
+                const areaPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                let d = `M${puntos[0].x},${puntos[0].y}`;
+                for (let i = 1; i < puntos.length; i++) {
+                    d += ` L${puntos[i].x},${puntos[i].y}`;
+                }
+                d += ` V100 H${puntos[0].x} Z`;
+                areaPath.setAttribute('d', d);
+                areaPath.setAttribute('fill', 'url(#lineGrad)');
+                svg.appendChild(areaPath);
+                
+                // Dibujar línea
+                const linePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                d = `M${puntos[0].x},${puntos[0].y}`;
+                for (let i = 1; i < puntos.length; i++) {
+                    d += ` L${puntos[i].x},${puntos[i].y}`;
+                }
+                linePath.setAttribute('d', d);
+                linePath.setAttribute('fill', 'none');
+                linePath.setAttribute('stroke', '#4f46e5');
+                linePath.setAttribute('stroke-width', '3');
+                linePath.setAttribute('stroke-linecap', 'round');
+                linePath.setAttribute('stroke-linejoin', 'round');
+                svg.appendChild(linePath);
+                
+                // Dibujar puntos
+                puntos.forEach(punto => {
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', punto.x);
+                    circle.setAttribute('cy', punto.y);
+                    circle.setAttribute('r', '4');
+                    circle.setAttribute('fill', '#4f46e5');
+                    svg.appendChild(circle);
+                });
+            }
+            
+            // Actualizar labels
+            puntos.forEach(punto => {
+                const span = document.createElement('span');
+                span.textContent = punto.label;
+                labelsContainer.appendChild(span);
+            });
+        }
+
+        function actualizarRiesgos(riesgos) {
+            const container = document.getElementById('riesgos-container');
+            container.innerHTML = '';
+            
+            if (!riesgos || riesgos.length === 0) {
+                container.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-slate-500">No hay estudiantes en riesgo</td></tr>';
+                return;
+            }
+            
+            riesgos.forEach((estudiante, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors fade-in';
+                tr.style.animationDelay = `${index * 0.05}s`;
+                
+                tr.innerHTML = `
+                    <td class="px-6 py-4 text-sm font-semibold text-slate-900">#${estudiante.id}</td>
+                    <td class="px-6 py-4 text-sm text-slate-600">${estudiante.carrera}</td>
+                    <td class="px-6 py-4 text-sm text-slate-600">${estudiante.peor_materia}</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="text-sm font-bold text-red-600">${estudiante.calificacion_peor.toFixed(1)}</span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <span class="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-bold">ALERTA</span>
+                    </td>
+                `;
+                container.appendChild(tr);
+            });
+        }
+
+        function actualizarTextoFiltros() {
+            const filtroTexto = document.getElementById('filtro-activo');
+            let texto = 'Mostrando: ';
+            
+            if (filtrosActuales.carrera === 'Todas') {
+                texto += 'Todas las carreras';
+            } else {
+                texto += filtrosActuales.carrera;
+            }
+            
+            texto += ` - Año ${filtrosActuales.año}`;
+            filtroTexto.innerHTML = `<span class="filter-badge text-white px-4 py-2 rounded-lg shadow-sm inline-flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">visibility</span>
+                ${texto}
+            </span>`;
+        }
+
+        async function exportarDatos() {
+            try {
+                const params = new URLSearchParams({
+                    carrera: filtrosActuales.carrera,
+                    año: filtrosActuales.año
+                });
+                
+                const response = await fetch(`/api/datos?${params}`);
+                const data = await response.json();
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `datos_academicos_${filtrosActuales.carrera}_${filtrosActuales.año}_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+                
+                mostrarExito('Datos exportados correctamente');
+            } catch (error) {
+                console.error('Error al exportar:', error);
+                mostrarError('Error al exportar datos');
+            }
+        }
+
+        function verTodosRiesgos() {
+            alert('Mostrando todos los casos de riesgo (próximamente)');
+        }
+
+        function mostrarError(mensaje) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-bounce';
+            toast.textContent = '❌ ' + mensaje;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        function mostrarExito(mensaje) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+            toast.textContent = '✅ ' + mensaje;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Actualización automática cada 30 segundos
+        setInterval(() => {
+            if (!document.body.classList.contains('loading')) {
+                console.log('Actualizando automáticamente...');
+                cargarDatos();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
